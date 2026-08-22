@@ -3,6 +3,7 @@
 import Avatar from "./Avatar";
 import { SkillBadge, InterestBadge } from "./SkillBadge";
 import Button from "./Button";
+import { hasGithubSkill } from "@/lib/utils";
 
 // Discovery card (README section 17).
 // Compatibility score is intentionally not shown here - it is revealed
@@ -34,7 +35,7 @@ export default function ProfileCard({ profile, compatibility, onLike, onPass, di
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {profile.skills.map((skill) => (
-              <SkillBadge key={skill} skill={skill} />
+              <SkillBadge key={skill} skill={skill} verified={hasGithubSkill(profile, skill)} />
             ))}
           </div>
         </div>

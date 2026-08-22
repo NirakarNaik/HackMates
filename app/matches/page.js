@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import MatchCard from "@/components/MatchCard";
 import ProfileDetail from "@/components/ProfileDetail";
+import ChatModal from "@/components/ChatModal";
 import { EmptyState } from "@/components/EmptyState";
 import Button from "@/components/Button";
 import { useProtectedUser } from "@/lib/auth";
@@ -18,6 +19,7 @@ export default function MatchesPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewing, setViewing] = useState(null);
+  const [chatting, setChatting] = useState(null);
 
   useEffect(() => {
     if (!authLoading && !profile && !error) {
@@ -63,6 +65,7 @@ export default function MatchesPage() {
           const otherId = match.user1_id === user.id ? match.user2_id : match.user1_id;
           return {
             ...profilesByUser[otherId],
+            matchId: match.id,
             score: match.compatibility_score,
             reasons: match.compatibility_reasons,
             matchedAt: match.created_at,
@@ -133,6 +136,7 @@ export default function MatchesPage() {
                 match={match}
                 onViewProfile={setViewing}
                 onConnect={handleConnect}
+                onChat={setChatting}
               />
             ))}
           </div>
@@ -145,6 +149,15 @@ export default function MatchesPage() {
           score={viewing.score}
           reasons={viewing.reasons}
           onClose={() => setViewing(null)}
+        />
+      )}
+
+      {chatting && (
+        <ChatModal
+          match={chatting}
+          matchId={chatting.matchId}
+          myId={user.id}
+          onClose={() => setChatting(null)}
         />
       )}
     </>

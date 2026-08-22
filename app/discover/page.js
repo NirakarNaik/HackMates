@@ -12,9 +12,12 @@ import { getSupabase } from "@/lib/supabase";
 import { calculateCompatibility } from "@/lib/matching";
 import { ensureDemoProfiles } from "@/lib/demoData";
 
-// Demo profiles like back when the match is strong enough (>= 65%),
-// so mutual matching can be demonstrated end-to-end in a single-account demo.
-const DEMO_LIKE_BACK_THRESHOLD = 65;
+// Demo profiles always like back, so every Like in a single-account demo
+// triggers the full mutual-match flow (match modal + matches page entry).
+// (Previously liked back only at score >= 65, which meant most Likes -
+// everything below the first couple of highest-scoring cards - produced
+// no visible response at all.)
+const DEMO_LIKE_BACK_THRESHOLD = 0;
 
 export default function DiscoverPage() {
   const router = useRouter();

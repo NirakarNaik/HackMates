@@ -4,9 +4,10 @@ import Avatar from "./Avatar";
 import { SkillBadge, InterestBadge } from "./SkillBadge";
 import { ScorePill } from "./CompatibilityScore";
 import Button from "./Button";
+import { hasGithubSkill } from "@/lib/utils";
 
 // Match list card (README section 30).
-export default function MatchCard({ match, onViewProfile, onConnect, connecting }) {
+export default function MatchCard({ match, onViewProfile, onConnect, onChat, connecting }) {
   return (
     <article className="animate-fade-up flex flex-col rounded-2xl border border-hairline bg-surface p-5 transition-colors hover:bg-surface-2">
       <div className="flex items-start justify-between gap-3">
@@ -26,7 +27,7 @@ export default function MatchCard({ match, onViewProfile, onConnect, connecting 
 
       <div className="mt-3 flex flex-wrap gap-1.5">
         {match.skills.slice(0, 4).map((skill) => (
-          <SkillBadge key={skill} skill={skill} />
+          <SkillBadge key={skill} skill={skill} verified={hasGithubSkill(match, skill)} />
         ))}
       </div>
 
@@ -49,9 +50,12 @@ export default function MatchCard({ match, onViewProfile, onConnect, connecting 
         </ul>
       )}
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <Button variant="secondary" className="flex-1" onClick={() => onViewProfile(match)}>
           View Profile
+        </Button>
+        <Button variant="primary" className="flex-1" onClick={() => onChat(match)}>
+          Chat
         </Button>
         {(match.github_url || match.discord_username) && (
           <Button

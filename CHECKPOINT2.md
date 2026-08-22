@@ -29,7 +29,7 @@ Flow: Signup → Onboarding → Discover (swipe) → Mutual match + modal → Ma
 | Matches `/matches` | Score-sorted cards (name, role, score pill, bio, skills **+ interests**, reasons, View Profile, Connect) |
 | Connect | GitHub / LinkedIn / Discord reveal in ProfileDetail modal |
 | Profile `/profile` | View + edit every field incl. GitHub/LinkedIn/Discord |
-| Demo data | **36 profiles** (24 original + 12 Indian-origin additions of 2026-08-23) auto-seeded idempotently on first `/discover` visit (`is_demo=true`, fixed UUIDs); demo profiles like back at score ≥ 65. All 36 verified live in DB |
+| Demo data | **36 profiles** (24 original + 12 Indian-origin additions of 2026-08-23) auto-seeded idempotently on first `/discover` visit (`is_demo=true`, fixed UUIDs); demo profiles always like back (see §4). All 36 verified live in DB |
 | States | Loading skeletons/spinners, friendly error mapping, empty states per README §36 |
 
 ---
@@ -85,6 +85,42 @@ User chose removal over migration. Reverted across schema.sql (column + ALTER), 
 step 5, ProfileEditForm, profile page Links, ProfileDetail Connect row, MatchCard condition.
 Links are GitHub + Discord only again. Lint ✅ build ✅.
 
+### E. Demo like-back threshold → always (2026-08-23)
+`DEMO_LIKE_BACK_THRESHOLD` 65 → 0 in `app/discover/page.js`. Root cause of two user-reported
+bugs: candidates sorted by score desc meant only the top ~2 cards cleared ≥65, so most Likes
+gave no modal ("broken") and matches page showed exactly 2 rows. Every Like now matches.
+
+### F. Chat between matches (2026-08-23) — UNCOMMITTED, DB MIGRATION REQUIRED
+- `supabase/schema.sql`: new `messages` table (id bigint identity, match_id, sender_id,
+  body ≤2000 chars, created_at) + RLS (participants read; sender must be a participant and
+  either auth.uid() or a demo profile) + indexes + supabase_realtime publication (idempotent DO block).
+- `components/ChatModal.js` (new): history load + realtime subscription (postgres_changes,
+  filter match_id) + send + auto-scroll + friendly empty/error states. Demo partners reply
+  after ~1-2s with canned templates so chat is demonstrable single-account.
+- MatchCard: added Chat button; matches page passes `matchId` + opens ChatModal (`myId` = user.id).
+- Lint ✅ build ✅. NOT committed (user said hold commits until they say so).
+- **BLOCKER until user runs the MESSAGES section of schema.sql in the SQL Editor:
+  opening a chat will show "Chat is unavailable right now."**
+
+### G. GitHub sync → verified skills (2026-08-23) — UNCOMMITTED, needs DB migration + PAT
+Per brainstorm (no HTML scraping; official API via server route):
+- `app/api/github/sync/route.js` (new): POST {username} → fetches user + non-fork repos with
+  `GITHUB_PAT` server-side env; derives top languages (recent pushes weight ×2) + topics.
+  Token never reaches the browser.
+- `lib/utils.js`: extractGithubUsername, githubSkillsOf, hasGithubSkill, effectiveSkills
+  (self-reported ∪ GitHub languages, deduped).
+- Matching: skillComplementarity now uses effectiveSkills for both sides — verified languages
+  satisfy needs like claimed skills do. Interests/topics NOT merged into interest scoring yet.
+- Forms: "Sync from GitHub" button under the GitHub field in OnboardingForm step 5 +
+  ProfileEditForm; result saved via payload as github_skills/github_topics/github_synced_at.
+- Badges: SkillBadge gained `verified` prop (emerald ✓ ring, tooltip); verified badges render
+  on ProfileCard/MatchCard/ProfileDetail. ProfileDetail also lists GitHub topics.
+- FIXED latent bug: ProfileDetail's listBlock passed badges as components receiving children,
+  but SkillBadge/InterestBadge read props → empty pills. Now render-fn call sites + children
+  fallback in both badge components.
+- Lint ✅ build ✅. **User must: (1) run the GITHUB SYNC columns migration at end of
+  schema.sql, (2) add GITHUB_PAT to .env.local, (3) restart dev server for the env var.**
+
 ---
 
 ## 4. Important Decisions Made (and why)
@@ -94,7 +130,7 @@ Links are GitHub + Discord only again. Lint ✅ build ✅.
 | Client components + browser Supabase client everywhere | Simplest architecture per spec; RLS secures data server-side regardless |
 | `proxy.js` instead of `middleware.js` | Next.js 16 renamed it (functionality identical) |
 | `is_demo` column + fixed UUIDs | Auto-seeding demo data while keeping RLS safe (anyone may INSERT demo rows, never edit others' real profiles) |
-| Demo users like back at score ≥ 65 | Makes mutual-match demonstrable single-account; threshold validated against actual score distribution |
+| Demo profiles ALWAYS like back (threshold 0, was ≥65) | The 65 threshold starved the flow: with candidates sorted by score desc, only the top ~2 cards cleared it — every other Like gave zero feedback ("modal broken most of the time") and the matches page showed just those 2. Every Like now yields the full match experience |
 | Canonical match pair order | One unique constraint prevents duplicates in both directions |
 | Swipe = upsert | Spec: one current decision per target |
 | Initials-fallback avatars (no Storage upload) | Avoids storage failure modes; works offline |
@@ -110,6 +146,8 @@ Links are GitHub + Discord only again. Lint ✅ build ✅.
 3. E2E re-test of the four changes in the browser (signup → onboarding w/ LinkedIn → discover arrow keys → like top card → modal shows score → matches shows skills+interests → connect reveals all three links).
 4. ~~Verify email-confirmation toggle is OFF~~ — VERIFIED OFF 2026-08-23: script `signUp` returned an instant session. Note: a labeled seeder account `hackmates.seeder@example.com` was created for DB seeding (safe to delete from Auth dashboard; app auto-seeds via /discover anyway).
 5. Optional: deploy to Vercel, final mobile pass. **ON HOLD — user will explicitly request when ready; do not bring up or prep unprompted.**
+6. **Run the MESSAGES section (end of schema.sql) in the SQL Editor** — required for chat to work on the live DB. Until then the chat modal opens with an "unavailable" message.
+7. **GitHub sync activation:** run the "GITHUB SYNC columns" migration (end of schema.sql) in the SQL Editor, add `GITHUB_PAT=ghp_...` to `.env.local`, then restart `npm run dev`.
 
 ## 6. Issues / Blockers
 
@@ -123,7 +161,7 @@ Links are GitHub + Discord only again. Lint ✅ build ✅.
 ```
 hackmates/
 ├── proxy.js                      # auth guard/session refresh (Next 16 middleware)
-├── supabase/schema.sql           # 3 tables + RLS + indexes + linkedin migration
+├── supabase/schema.sql           # 4 tables + RLS + indexes + realtime publication
 ├── lib/
 │   ├── constants.js              # README §16 option lists + ROLE_SKILL_MAP
 │   ├── utils.js                  # cn/norm/intersect/initials/hue/expandToSkills
@@ -136,6 +174,7 @@ hackmates/
 │   ├── CompatibilityScore.js (ring + ScorePill)  Navbar.js
 │   ├── ProfileCard.js (no score ring)  MatchCard.js (+interests)
 │   ├── MatchModal.js  ProfileDetail.js (+LinkedIn)  EmptyState.js (+CardSkeleton)
+│   ├── ChatModal.js (realtime chat + demo replies)
 └── app/
     ├── layout.js  globals.css  page.js            # shell/theme/landing
     ├── login/page.js  signup/page.js

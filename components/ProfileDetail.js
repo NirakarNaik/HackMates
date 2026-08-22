@@ -3,6 +3,7 @@
 import Avatar from "./Avatar";
 import { SkillBadge, InterestBadge } from "./SkillBadge";
 import Button from "./Button";
+import { hasGithubSkill } from "@/lib/utils";
 
 // Full profile details, used as a modal from the Matches page.
 export default function ProfileDetail({ profile, score, reasons, onClose }) {
@@ -42,8 +43,15 @@ export default function ProfileDetail({ profile, score, reasons, onClose }) {
         )}
 
         {bioBlock(profile.bio)}
-        {listBlock("Skills", profile.skills, SkillBadge)}
-        {listBlock("Interests", profile.interests, InterestBadge)}
+        {listBlock("Skills", profile.skills, (item) => (
+          <SkillBadge key={item} skill={item} verified={hasGithubSkill(profile, item)} />
+        ))}
+        {listBlock("Interests", profile.interests, (item) => (
+          <InterestBadge key={item} interest={item} />
+        ))}
+        {listBlock("GitHub topics", profile.github_topics, (item) => (
+          <InterestBadge key={item} interest={item} />
+        ))}
         <div>
           <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
             Looking for

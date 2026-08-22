@@ -12,6 +12,7 @@ import {
   EXPERIENCE_LEVELS,
   AVAILABILITY_OPTIONS,
 } from "@/lib/constants";
+import { extractGithubUsername } from "@/lib/utils";
 
 // Mounted fresh when editing starts; initial values come from props.
 export default function ProfileEditForm({ user, initial, onCancel }) {
@@ -28,6 +29,12 @@ export default function ProfileEditForm({ user, initial, onCancel }) {
   const [experienceLevel, setExperienceLevel] = useState(initial?.experience_level || "");
   const [availability, setAvailability] = useState(initial?.availability || "");
   const [githubUrl, setGithubUrl] = useState(initial?.github_url || "");
+  const [githubSkills, setGithubSkills] = useState(initial?.github_skills || []);
+  const [githubTopics, setGithubTopics] = useState(initial?.github_topics || []);
+  const [githubSyncedAt, setGithubSyncedAt] = useState(initial?.github_synced_at || null);
+  const [githubSyncing, setGithubSyncing] = useState(false);
+  const [githubSyncMsg, setGithubSyncMsg] = useState(null);
+  const [githubSyncErr, setGithubSyncErr] = useState(null);
   const [discordUsername, setDiscordUsername] = useState(initial?.discord_username || "");
 
   async function handleSave() {
@@ -58,6 +65,9 @@ export default function ProfileEditForm({ user, initial, onCancel }) {
           experience_level: experienceLevel,
           availability,
           github_url: githubUrl.trim() || null,
+          github_skills: githubSkills,
+          github_topics: githubTopics,
+          github_synced_at: githubSyncedAt,
           discord_username: discordUsername.trim() || null,
           updated_at: new Date().toISOString(),
         })
@@ -165,6 +175,52 @@ export default function ProfileEditForm({ user, initial, onCancel }) {
             placeholder="https://github.com/you"
             className="w-full rounded-xl border border-hairline bg-surface-2 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none"
           />
+          <div className="mt-2">
+            <Button
+              type="button"
+              variant="secondary"
+              loading={githubSyncing}
+              onClick={async () => {
+                setGithubSyncErr(null);
+                setGithubSyncMsg(null);
+                const username = extractGithubUsername(githubUrl);
+                if (!username) {
+                  setGithubSyncErr("Add your GitHub link (or username) first.");
+                  return;
+                }
+                setGithubSyncing(true);
+                try {
+                  const res = await fetch("/api/github/sync", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error || "Sync failed.");
+                  setGithubSkills(data.languages);
+                  setGithubTopics(data.topics);
+                  setGithubSyncedAt(data.syncedAt);
+                  setGithubSyncMsg(
+                    data.languages.length > 0
+                      ? `Verified ${data.publicRepos} repos - top languages: ${data.languages.join(", ")}`
+                      : `No original repos found for ${data.login} yet.`
+                  );
+                } catch (err) {
+                  setGithubSyncErr(err.message);
+                } finally {
+                  setGithubSyncing(false);
+                }
+              }}
+            >
+              Sync from GitHub
+            </Button>
+            {githubSyncMsg && (
+              <p className="mt-1.5 text-xs text-emerald-300">{githubSyncMsg}</p>
+            )}
+            {githubSyncErr && (
+              <p className="mt-1.5 text-xs text-rose-300">{githubSyncErr}</p>
+            )}
+          </div>
         </div>
         <div>
           <label htmlFor="discord" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">

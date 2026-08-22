@@ -24,6 +24,9 @@ create table if not exists public.profiles (
   availability     text,
   github_url       text,
   discord_username text,
+  github_skills    text[] not null default '{}',
+  github_topics    text[] not null default '{}',
+  github_synced_at timestamptz,
   is_demo          boolean not null default false,
   created_at       timestamptz not null default now(),
   updated_at       timestamptz not null default now()
@@ -131,3 +134,81 @@ create policy "matches_insert_participant"
   with check (user1_id = auth.uid() or user2_id = auth.uid());
 
 -- No update/delete policies for MVP: matches are immutable once created.
+
+-- -------------------------------------------------------------
+-- MESSAGES
+-- Chat threads between matched users. A message belongs to a match.
+-- Both participants can read the thread; a participant sends as
+-- themselves. Inserts "as" a demo participant are allowed so that
+-- demo profiles can reply in single-account demos.
+--
+-- MIGRATION: run this whole section once in the SQL Editor on an
+-- existing database (safe to re-run except policy creation).
+-- -------------------------------------------------------------
+create table if not exists public.messages (
+  id         bigint generated always as identity primary key,
+  match_id   uuid not null,
+  sender_id  uuid not null,
+  body       text not null check (char_length(body) between 1 and 2000),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_messages_match on public.messages (match_id, created_at);
+
+alter table public.messages enable row level security;
+
+-- Both participants of the match can read the thread
+create policy "messages_select_participant"
+  on public.messages for select
+  to authenticated
+  using (
+    exists (
+      select 1 from public.matches m
+      where m.id = messages.match_id
+        and (m.user1_id = auth.uid() or m.user2_id = auth.uid())
+    )
+  );
+
+-- Sender must be a participant of the match; either the current user
+-- or a demo profile (so demo partners can reply)
+create policy "messages_insert_participant_or_demo"
+  on public.messages for insert
+  to authenticated
+  with check (
+    exists (
+      select 1 from public.matches m
+      where m.id = messages.match_id
+        and (
+          (m.user1_id = auth.uid() and m.user2_id = sender_id)
+          or (m.user2_id = auth.uid() and m.user1_id = sender_id)
+        )
+    )
+    and (
+      sender_id = auth.uid()
+      or exists (
+        select 1 from public.profiles p
+        where p.user_id = messages.sender_id and p.is_demo
+      )
+    )
+  );
+
+-- No update/delete policies: chat history is immutable.
+
+-- Stream new messages to subscribed clients via Supabase Realtime
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and tablename = 'messages'
+  ) then
+    alter publication supabase_realtime add table public.messages;
+  end if;
+end $$;
+
+-- -------------------------------------------------------------
+-- MIGRATION: GitHub sync columns
+-- Safe to re-run on an existing database.
+-- -------------------------------------------------------------
+alter table public.profiles add column if not exists github_skills text[] not null default '{}';
+alter table public.profiles add column if not exists github_topics text[] not null default '{}';
+alter table public.profiles add column if not exists github_synced_at timestamptz;
