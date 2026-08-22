@@ -2,25 +2,23 @@
 
 import Avatar from "./Avatar";
 import { SkillBadge, InterestBadge } from "./SkillBadge";
-import CompatibilityScore from "./CompatibilityScore";
 import Button from "./Button";
 
 // Discovery card (README section 17).
+// Compatibility score is intentionally not shown here - it is revealed
+// only when a mutual match happens (match modal / matches page).
 export default function ProfileCard({ profile, compatibility, onLike, onPass, disabled }) {
-  const { score, reasons } = compatibility;
+  const { reasons } = compatibility;
 
   return (
     <article className="animate-fade-up w-full max-w-sm rounded-3xl border border-hairline bg-surface p-6 shadow-2xl shadow-black/40">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Avatar src={profile.avatar_url} name={profile.name} size={64} />
-          <div>
-            <h2 className="text-xl font-bold leading-tight">{profile.name}</h2>
-            <p className="text-sm font-medium text-violet-300">{profile.role}</p>
-            <p className="mt-0.5 text-xs text-muted">{profile.experience_level}</p>
-          </div>
+      <div className="flex items-start gap-4">
+        <Avatar src={profile.avatar_url} name={profile.name} size={64} />
+        <div>
+          <h2 className="text-xl font-bold leading-tight">{profile.name}</h2>
+          <p className="text-sm font-medium text-violet-300">{profile.role}</p>
+          <p className="mt-0.5 text-xs text-muted">{profile.experience_level}</p>
         </div>
-        <CompatibilityScore score={score} size={56} label={false} />
       </div>
 
       {profile.bio && (

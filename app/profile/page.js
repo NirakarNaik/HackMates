@@ -113,7 +113,7 @@ export default function ProfilePage() {
               </p>
             </section>
 
-            {(profile.github_url || profile.discord_username) && (
+            {(profile.github_url || profile.linkedin_url || profile.discord_username) && (
               <section>
                 <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
                   Links
@@ -127,6 +127,16 @@ export default function ProfilePage() {
                       className="font-medium text-violet-300 hover:text-violet-200"
                     >
                       GitHub ↗
+                    </a>
+                  )}
+                  {profile.linkedin_url && (
+                    <a
+                      href={profile.linkedin_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium text-violet-300 hover:text-violet-200"
+                    >
+                      LinkedIn ↗
                     </a>
                   )}
                   {profile.discord_username && (

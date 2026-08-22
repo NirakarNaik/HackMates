@@ -180,6 +180,20 @@ export default function DiscoverPage() {
   const current = candidates[index];
   const remaining = candidates.length - index;
 
+  // Keyboard shortcuts: ArrowLeft = pass, ArrowRight = like
+  useEffect(() => {
+    function onKeyDown(e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (matchInfo || swiping || pageLoading || authLoading || error) return;
+      if (!candidates[index]) return;
+      if (e.key === "ArrowLeft") handlePass();
+      else handleLike();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matchInfo, swiping, pageLoading, authLoading, error, candidates, index]);
+
   const content = useMemo(() => {
     if (authLoading || pageLoading) {
       return <CardSkeleton />;

@@ -1,7 +1,7 @@
 "use client";
 
 import Avatar from "./Avatar";
-import { SkillBadge } from "./SkillBadge";
+import { SkillBadge, InterestBadge } from "./SkillBadge";
 import { ScorePill } from "./CompatibilityScore";
 import Button from "./Button";
 
@@ -30,6 +30,14 @@ export default function MatchCard({ match, onViewProfile, onConnect, connecting 
         ))}
       </div>
 
+      {(match.interests || []).length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {match.interests.slice(0, 4).map((interest) => (
+            <InterestBadge key={interest} interest={interest} />
+          ))}
+        </div>
+      )}
+
       {match.reasons && match.reasons.length > 0 && (
         <ul className="mt-3 space-y-1">
           {match.reasons.slice(0, 2).map((reason) => (
@@ -45,7 +53,7 @@ export default function MatchCard({ match, onViewProfile, onConnect, connecting 
         <Button variant="secondary" className="flex-1" onClick={() => onViewProfile(match)}>
           View Profile
         </Button>
-        {(match.github_url || match.discord_username) && (
+        {(match.github_url || match.linkedin_url || match.discord_username) && (
           <Button
             variant="primary"
             className="flex-1"

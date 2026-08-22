@@ -33,6 +33,7 @@ export default function OnboardingForm({ user, existingProfile }) {
   const [experienceLevel, setExperienceLevel] = useState(p?.experience_level || "");
   const [availability, setAvailability] = useState(p?.availability || "");
   const [githubUrl, setGithubUrl] = useState(p?.github_url || "");
+  const [linkedinUrl, setLinkedinUrl] = useState(p?.linkedin_url || "");
   const [discordUsername, setDiscordUsername] = useState(p?.discord_username || "");
 
   const [fieldErrors, setFieldErrors] = useState({});
@@ -98,6 +99,7 @@ export default function OnboardingForm({ user, existingProfile }) {
         experience_level: experienceLevel,
         availability,
         github_url: githubUrl.trim() || null,
+        linkedin_url: linkedinUrl.trim() || null,
         discord_username: discordUsername.trim() || null,
         updated_at: new Date().toISOString(),
       };
@@ -323,6 +325,19 @@ export default function OnboardingForm({ user, existingProfile }) {
                 value={discordUsername}
                 onChange={(e) => setDiscordUsername(e.target.value)}
                 placeholder="you#1234 or @you"
+                className="w-full rounded-xl border border-hairline bg-surface-2 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="linkedin" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">
+                LinkedIn link <span className="normal-case">(optional)</span>
+              </label>
+              <input
+                id="linkedin"
+                type="url"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+                placeholder="https://linkedin.com/in/you"
                 className="w-full rounded-xl border border-hairline bg-surface-2 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none"
               />
             </div>
