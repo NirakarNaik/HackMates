@@ -28,7 +28,6 @@ export default function ProfileEditForm({ user, initial, onCancel }) {
   const [experienceLevel, setExperienceLevel] = useState(initial?.experience_level || "");
   const [availability, setAvailability] = useState(initial?.availability || "");
   const [githubUrl, setGithubUrl] = useState(initial?.github_url || "");
-  const [linkedinUrl, setLinkedinUrl] = useState(initial?.linkedin_url || "");
   const [discordUsername, setDiscordUsername] = useState(initial?.discord_username || "");
 
   async function handleSave() {
@@ -59,7 +58,6 @@ export default function ProfileEditForm({ user, initial, onCancel }) {
           experience_level: experienceLevel,
           availability,
           github_url: githubUrl.trim() || null,
-          linkedin_url: linkedinUrl.trim() || null,
           discord_username: discordUsername.trim() || null,
           updated_at: new Date().toISOString(),
         })
@@ -178,19 +176,6 @@ export default function ProfileEditForm({ user, initial, onCancel }) {
             value={discordUsername}
             onChange={(e) => setDiscordUsername(e.target.value)}
             placeholder="you#1234 or @you"
-            className="w-full rounded-xl border border-hairline bg-surface-2 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none"
-          />
-        </div>
-        <div>
-          <label htmlFor="linkedin" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted">
-            LinkedIn link
-          </label>
-          <input
-            id="linkedin"
-            type="url"
-            value={linkedinUrl}
-            onChange={(e) => setLinkedinUrl(e.target.value)}
-            placeholder="https://linkedin.com/in/you"
             className="w-full rounded-xl border border-hairline bg-surface-2 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none"
           />
         </div>

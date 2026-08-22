@@ -73,12 +73,17 @@ Flow: Signup → Onboarding → Discover (swipe) → Mutual match + modal → Ma
 
 Verification after B: `npm run lint` ✅, `npm run build` ✅; hot-reloaded onto the running dev server.
 
-### C. Demo data expanded 24 → 36 (`lib/demoData.js`, UNCOMMITTED)
+### C. Demo data expanded 24 → 36 (`lib/demoData.js`, committed `b013e8a`)
 12 new Indian-origin profiles (indices 24-35): Aarav Malhotra, Sanya Bhatia, Rohit Choudhury,
 Anika Krishnan, Vivek Anand, Pooja Shetty, Ishan Trivedi, Kavya Suresh, Arnav Saxena,
-Ritika Bose, Dhruv Chopra, Meghna Ravindran. All values from README §16 lists; no
-linkedin_url fields until the live-DB migration runs. Seeded to live DB via one-off
-authenticated script (deleted afterwards); `npm run lint` ✅.
+Ritika Bose, Dhruv Chopra, Meghna Ravindran. All values from README §16 lists.
+Seeded to live DB via one-off authenticated script (deleted afterwards); all 36 verified live.
+
+### D. LinkedIn option REMOVED (user request, 2026-08-23) — supersedes §3B item 1
+Saving a profile with `linkedin_url` failed on live DB (PGRST204; column never migrated).
+User chose removal over migration. Reverted across schema.sql (column + ALTER), OnboardingForm
+step 5, ProfileEditForm, profile page Links, ProfileDetail Connect row, MatchCard condition.
+Links are GitHub + Discord only again. Lint ✅ build ✅.
 
 ---
 
@@ -100,10 +105,7 @@ authenticated script (deleted afterwards); `npm run lint` ✅.
 
 ## 5. Remaining Work
 
-1. **Run the LinkedIn migration on the live DB (blocker for that field):**
-   `alter table public.profiles add column if not exists linkedin_url text;`
-   (Supabase Dashboard → SQL Editor → Run; already appended to schema.sql.)
-   **2026-08-23 REST probe: still missing** (`column profiles.linkedin_url does not exist`).
+1. ~~Run the LinkedIn migration~~ — MOOT: LinkedIn feature removed (§3D); no schema change needed.
 2. ~~Commit the four changes~~ — DONE as `2b1c5b8` (9 files incl. this doc).
 3. E2E re-test of the four changes in the browser (signup → onboarding w/ LinkedIn → discover arrow keys → like top card → modal shows score → matches shows skills+interests → connect reveals all three links).
 4. ~~Verify email-confirmation toggle is OFF~~ — VERIFIED OFF 2026-08-23: script `signUp` returned an instant session. Note: a labeled seeder account `hackmates.seeder@example.com` was created for DB seeding (safe to delete from Auth dashboard; app auto-seeds via /discover anyway).
@@ -111,7 +113,7 @@ authenticated script (deleted afterwards); `npm run lint` ✅.
 
 ## 6. Issues / Blockers
 
-1. `linkedin_url` missing from live DB until the ALTER above runs — saving that field will fail (PGRST204 unknown column) until then. Verified missing via REST probe 2026-08-23.
+1. ~~`linkedin_url` missing from live DB~~ — resolved by removing the LinkedIn feature entirely (§3D); profile save works again with GitHub + Discord only.
 2. Demo avatars load from i.pravatar.cc (needs internet; initials fallback is graceful).
 3. react-hooks v6 lint strictness: keep the mount-based form initialization pattern for future forms.
 4. ~~Uncommitted working tree~~ — resolved; §3B changes committed as `2b1c5b8`.

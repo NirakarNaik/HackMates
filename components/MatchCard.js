@@ -53,7 +53,7 @@ export default function MatchCard({ match, onViewProfile, onConnect, connecting 
         <Button variant="secondary" className="flex-1" onClick={() => onViewProfile(match)}>
           View Profile
         </Button>
-        {(match.github_url || match.linkedin_url || match.discord_username) && (
+        {(match.github_url || match.discord_username) && (
           <Button
             variant="primary"
             className="flex-1"

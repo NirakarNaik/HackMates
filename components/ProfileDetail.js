@@ -51,7 +51,7 @@ export default function ProfileDetail({ profile, score, reasons, onClose }) {
           <p className="text-sm">{(profile.looking_for || []).join(" · ") || "Not specified"}</p>
         </div>
 
-        {(profile.github_url || profile.linkedin_url || profile.discord_username) && (
+        {(profile.github_url || profile.discord_username) && (
           <div className="mt-6">
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
               Connect
@@ -60,11 +60,6 @@ export default function ProfileDetail({ profile, score, reasons, onClose }) {
               {profile.github_url && (
                 <a href={profile.github_url} target="_blank" rel="noreferrer">
                   <Button variant="secondary">GitHub ↗</Button>
-                </a>
-              )}
-              {profile.linkedin_url && (
-                <a href={profile.linkedin_url} target="_blank" rel="noreferrer">
-                  <Button variant="secondary">LinkedIn ↗</Button>
                 </a>
               )}
               {profile.discord_username && (

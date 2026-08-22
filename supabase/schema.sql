@@ -23,7 +23,6 @@ create table if not exists public.profiles (
   looking_for      text[] not null default '{}',
   availability     text,
   github_url       text,
-  linkedin_url     text,
   discord_username text,
   is_demo          boolean not null default false,
   created_at       timestamptz not null default now(),
@@ -132,9 +131,3 @@ create policy "matches_insert_participant"
   with check (user1_id = auth.uid() or user2_id = auth.uid());
 
 -- No update/delete policies for MVP: matches are immutable once created.
-
--- -------------------------------------------------------------
--- MIGRATION: add linkedin_url
--- Safe to run on a database where the tables already exist.
--- -------------------------------------------------------------
-alter table public.profiles add column if not exists linkedin_url text;
