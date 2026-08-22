@@ -15,7 +15,7 @@ Flow: Signup → Onboarding → Discover (swipe) → Mutual match + modal → Ma
 - Deps: `@supabase/supabase-js`, `@supabase/ssr` (nothing else beyond create-next-app defaults)
 - `npm run lint` ✅ `npm run build` ✅ prod smoke test ✅ dev server verified running on :3000
 - Live Supabase: schema APPLIED (verified via REST probe — `profiles` returns HTTP 200)
-- Git: 8 commits following README §43 message list; working tree has the §3 fixes **uncommitted**
+- Git: 9 commits — latest `2b1c5b8` adds linkedin link, keyboard swipes, match-only score, match-card interests
 
 ### Completed
 
@@ -29,7 +29,7 @@ Flow: Signup → Onboarding → Discover (swipe) → Mutual match + modal → Ma
 | Matches `/matches` | Score-sorted cards (name, role, score pill, bio, skills **+ interests**, reasons, View Profile, Connect) |
 | Connect | GitHub / LinkedIn / Discord reveal in ProfileDetail modal |
 | Profile `/profile` | View + edit every field incl. GitHub/LinkedIn/Discord |
-| Demo data | 24 profiles auto-seeded idempotently on first `/discover` visit (`is_demo=true`, fixed UUIDs); demo profiles like back at score ≥ 65 |
+| Demo data | **36 profiles** (24 original + 12 Indian-origin additions of 2026-08-23) auto-seeded idempotently on first `/discover` visit (`is_demo=true`, fixed UUIDs); demo profiles like back at score ≥ 65. All 36 verified live in DB |
 | States | Loading skeletons/spinners, friendly error mapping, empty states per README §36 |
 
 ---
@@ -60,7 +60,7 @@ Flow: Signup → Onboarding → Discover (swipe) → Mutual match + modal → Ma
   lists with no measurable needs get neutral 0.5 coverage instead of 0.
   Also reworded shared-goal reason to `You're both looking for: X, Y`.
 
-### B. Four user-requested changes (latest work — UNCOMMITTED)
+### B. Four user-requested changes (committed in `2b1c5b8`)
 1. **LinkedIn field (optional)** alongside GitHub/Discord:
    `supabase/schema.sql` (+`linkedin_url text` column + idempotent ALTER at file end),
    onboarding step 5 input, profile-edit input + payload, profile page Links section,
@@ -72,6 +72,13 @@ Flow: Signup → Onboarding → Discover (swipe) → Mutual match + modal → Ma
 4. **Interests on MatchCard**: InterestBadge row under skills (max 4).
 
 Verification after B: `npm run lint` ✅, `npm run build` ✅; hot-reloaded onto the running dev server.
+
+### C. Demo data expanded 24 → 36 (`lib/demoData.js`, UNCOMMITTED)
+12 new Indian-origin profiles (indices 24-35): Aarav Malhotra, Sanya Bhatia, Rohit Choudhury,
+Anika Krishnan, Vivek Anand, Pooja Shetty, Ishan Trivedi, Kavya Suresh, Arnav Saxena,
+Ritika Bose, Dhruv Chopra, Meghna Ravindran. All values from README §16 lists; no
+linkedin_url fields until the live-DB migration runs. Seeded to live DB via one-off
+authenticated script (deleted afterwards); `npm run lint` ✅.
 
 ---
 
@@ -96,17 +103,18 @@ Verification after B: `npm run lint` ✅, `npm run build` ✅; hot-reloaded onto
 1. **Run the LinkedIn migration on the live DB (blocker for that field):**
    `alter table public.profiles add column if not exists linkedin_url text;`
    (Supabase Dashboard → SQL Editor → Run; already appended to schema.sql.)
-2. **Commit the four changes** (8 modified files, see §3B) — e.g. message "add linkedin link, keyboard swipes, match-only score, match-card interests" or split per change.
+   **2026-08-23 REST probe: still missing** (`column profiles.linkedin_url does not exist`).
+2. ~~Commit the four changes~~ — DONE as `2b1c5b8` (9 files incl. this doc).
 3. E2E re-test of the four changes in the browser (signup → onboarding w/ LinkedIn → discover arrow keys → like top card → modal shows score → matches shows skills+interests → connect reveals all three links).
-4. Verify email-confirmation toggle is OFF (Authentication → Providers → Email) if not done earlier — signup must yield an instant session for the demo.
-5. Optional: deploy to Vercel, final mobile pass.
+4. ~~Verify email-confirmation toggle is OFF~~ — VERIFIED OFF 2026-08-23: script `signUp` returned an instant session. Note: a labeled seeder account `hackmates.seeder@example.com` was created for DB seeding (safe to delete from Auth dashboard; app auto-seeds via /discover anyway).
+5. Optional: deploy to Vercel, final mobile pass. **ON HOLD — user will explicitly request when ready; do not bring up or prep unprompted.**
 
 ## 6. Issues / Blockers
 
-1. `linkedin_url` missing from live DB until the ALTER above runs — saving that field will fail (PGRST204 unknown column) until then.
+1. `linkedin_url` missing from live DB until the ALTER above runs — saving that field will fail (PGRST204 unknown column) until then. Verified missing via REST probe 2026-08-23.
 2. Demo avatars load from i.pravatar.cc (needs internet; initials fallback is graceful).
 3. react-hooks v6 lint strictness: keep the mount-based form initialization pattern for future forms.
-4. Uncommitted working tree (intentional — commit pending user go-ahead).
+4. ~~Uncommitted working tree~~ — resolved; §3B changes committed as `2b1c5b8`.
 
 ## 7. File Inventory (app code)
 
