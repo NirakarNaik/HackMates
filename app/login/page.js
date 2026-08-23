@@ -33,15 +33,18 @@ export default function LoginPage() {
       if (authError) {
         setError(
           authError.message.includes("Invalid login")
-            ? "Incorrect email or password."
-            : "Could not sign you in. Please try again."
+            ? "Incorrect email or password. If you haven't created an account yet, please sign up first."
+            : authError.message.includes("Email not confirmed")
+              ? "Please confirm your email address before logging in, or disable email confirmation in your Supabase Auth settings."
+              : authError.message || "Could not sign you in. Please check your credentials."
         );
         return;
       }
 
       router.replace("/discover");
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      console.error("Login exception:", err);
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
