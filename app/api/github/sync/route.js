@@ -25,12 +25,25 @@ function prettifyTopic(topic) {
     .join(" ");
 }
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+};
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: CORS_HEADERS,
+  });
+}
+
 export async function POST(request) {
   const token = process.env.GITHUB_PAT;
   if (!token) {
     return Response.json(
       { error: "GitHub sync is not configured on the server." },
-      { status: 500 }
+      { status: 500, headers: CORS_HEADERS }
     );
   }
 
@@ -39,11 +52,17 @@ export async function POST(request) {
     const body = await request.json();
     username = String(body?.username || "").trim();
   } catch {
-    return Response.json({ error: "Invalid request body." }, { status: 400 });
+    return Response.json(
+      { error: "Invalid request body." },
+      { status: 400, headers: CORS_HEADERS }
+    );
   }
 
   if (!USERNAME_RE.test(username)) {
-    return Response.json({ error: "Enter a valid GitHub username first." }, { status: 400 });
+    return Response.json(
+      { error: "Enter a valid GitHub username first." },
+      { status: 400, headers: CORS_HEADERS }
+    );
   }
 
   const headers = {
@@ -63,16 +82,22 @@ export async function POST(request) {
     ]);
 
     if (userRes.status === 404) {
-      return Response.json({ error: "GitHub user not found." }, { status: 404 });
+      return Response.json(
+        { error: "GitHub user not found." },
+        { status: 404, headers: CORS_HEADERS }
+      );
     }
     if (userRes.status === 401 || userRes.status === 403) {
       return Response.json(
         { error: "GitHub rejected the request - check the GITHUB_PAT or rate limit." },
-        { status: 502 }
+        { status: 502, headers: CORS_HEADERS }
       );
     }
     if (!userRes.ok || !reposRes.ok) {
-      return Response.json({ error: "GitHub API request failed." }, { status: 502 });
+      return Response.json(
+        { error: "GitHub API request failed." },
+        { status: 502, headers: CORS_HEADERS }
+      );
     }
 
     const user = await userRes.json();
@@ -93,16 +118,22 @@ export async function POST(request) {
       }
     }
 
-    return Response.json({
-      login: user.login,
-      avatarUrl: user.avatar_url,
-      publicRepos: repos.length,
-      languages: topKeys(langCount, 6),
-      topics: topKeys(topicCount, 8).map(prettifyTopic),
-      syncedAt: new Date().toISOString(),
-    });
+    return Response.json(
+      {
+        login: user.login,
+        avatarUrl: user.avatar_url,
+        publicRepos: repos.length,
+        languages: topKeys(langCount, 6),
+        topics: topKeys(topicCount, 8).map(prettifyTopic),
+        syncedAt: new Date().toISOString(),
+      },
+      { headers: CORS_HEADERS }
+    );
   } catch (err) {
     console.error("GitHub sync failed:", err.message);
-    return Response.json({ error: "Could not reach GitHub right now." }, { status: 502 });
+    return Response.json(
+      { error: "Could not reach GitHub right now." },
+      { status: 502, headers: CORS_HEADERS }
+    );
   }
 }

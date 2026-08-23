@@ -12,12 +12,12 @@ const MAX_LEN = 2000;
 // Canned replies used when the chat partner is a demo profile so the
 // chat experience can be demonstrated end-to-end with a single account.
 const DEMO_REPLIES = [
-  "Hey! Good to match - what are you thinking of building?",
-  "Sounds good! Weekends work best for me.",
-  "Nice, I had a similar idea in mind. Want to sketch it out together?",
-  "Let's do it. I can take the backend if you cover the UI.",
-  "Cool! Share the repo or idea doc whenever you are ready.",
-  "Agreed - shall we set up a quick call this weekend?",
+  "Hey! Great matching with you - what tech stack or track are you planning for the hackathon?",
+  "Sounds awesome! I'm completely down to team up. Weekends and late night sprints work great for me.",
+  "Nice! I have some experience with that. Want to sketch out the system design together?",
+  "Let's do it! I can handle backend and API design if you cover the UI/frontend.",
+  "Cool! Share the repo or idea doc whenever you're ready and let's start hacking.",
+  "Agreed - let's connect on Discord or set up a quick sync this week!",
 ];
 
 function randomReply() {
@@ -53,7 +53,18 @@ export default function ChatModal({ match, matchId, myId, onClose }) {
           .eq("match_id", matchId)
           .order("created_at", { ascending: true })
           .limit(500);
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          if (
+            fetchError.code === "PGRST205" ||
+            fetchError.message?.includes("messages")
+          ) {
+            // Table not yet migrated on live Supabase instance - continue in local mode
+            if (!active) return;
+            setLoading(false);
+            return;
+          }
+          throw fetchError;
+        }
         if (!active) return;
         (data || []).forEach((m) => appendMessage(m));
         setLoading(false);
@@ -65,23 +76,28 @@ export default function ChatModal({ match, matchId, myId, onClose }) {
       }
     })();
 
-    const channel = supabase
-      .channel(`chat-${matchId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `match_id=eq.${matchId}`,
-        },
-        (payload) => appendMessage(payload.new)
-      )
-      .subscribe();
+    let channel;
+    try {
+      channel = supabase
+        .channel(`chat-${matchId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+            filter: `match_id=eq.${matchId}`,
+          },
+          (payload) => appendMessage(payload.new)
+        )
+        .subscribe();
+    } catch {
+      // Supabase realtime channel fallback
+    }
 
     return () => {
       active = false;
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [matchId]);
 
@@ -92,13 +108,31 @@ export default function ChatModal({ match, matchId, myId, onClose }) {
 
   async function insertMessage(senderId, body) {
     const supabase = getSupabase();
-    const { data, error: insertError } = await supabase
-      .from("messages")
-      .insert({ match_id: matchId, sender_id: senderId, body })
-      .select()
-      .single();
-    if (insertError) throw insertError;
-    appendMessage(data);
+    try {
+      const { data, error: insertError } = await supabase
+        .from("messages")
+        .insert({ match_id: matchId, sender_id: senderId, body })
+        .select()
+        .single();
+      if (insertError) throw insertError;
+      appendMessage(data);
+    } catch (err) {
+      if (
+        err.code === "PGRST205" ||
+        err.message?.includes("messages")
+      ) {
+        const localMsg = {
+          id: `local-${Date.now()}-${Math.random()}`,
+          match_id: matchId,
+          sender_id: senderId,
+          body,
+          created_at: new Date().toISOString(),
+        };
+        appendMessage(localMsg);
+        return;
+      }
+      throw err;
+    }
   }
 
   async function handleSend(e) {
@@ -129,32 +163,46 @@ export default function ChatModal({ match, matchId, myId, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md"
       role="dialog"
       aria-modal="true"
     >
-      <div className="animate-pop-in flex h-[80vh] max-h-[640px] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-hairline bg-surface shadow-2xl">
-        <div className="flex items-center gap-3 border-b border-hairline px-5 py-4">
-          <Avatar src={match.avatar_url} name={match.name} size={40} />
+      <div className="animate-pop-in relative flex h-[82vh] max-h-[660px] w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-cyan-500/30 bg-surface/95 shadow-2xl shadow-cyan-950/50 backdrop-blur-xl">
+        {/* Mecha Corner Ticks */}
+        <div className="pointer-events-none absolute top-0 left-0 h-3 w-3 border-t-2 border-l-2 border-cyan-400" />
+        <div className="pointer-events-none absolute top-0 right-0 h-3 w-3 border-t-2 border-r-2 border-violet-400" />
+
+        {/* Chat Header */}
+        <div className="flex items-center gap-3 border-b border-cyan-500/20 bg-surface-2/70 px-5 py-4">
+          <div className="relative">
+            <Avatar src={match.avatar_url} name={match.name} size={42} />
+            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-surface animate-pulse" />
+          </div>
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-bold leading-tight">{match.name}</h3>
-            <p className="truncate text-xs text-violet-300">{match.role}</p>
+            <div className="flex items-center gap-1.5">
+              <h3 className="truncate font-bold text-white leading-tight">{match.name}</h3>
+              <span className="rounded border border-cyan-500/30 bg-cyan-500/10 px-1 py-0.2 font-mono text-[8px] font-bold text-cyan-300">
+                SST
+              </span>
+            </div>
+            <p className="truncate text-xs text-cyan-300 font-medium">{match.role}</p>
           </div>
           {typeof match.score === "number" && <ScorePill score={match.score} />}
           <button
             type="button"
             onClick={onClose}
             aria-label="Close chat"
-            className="ml-1 cursor-pointer rounded-lg px-2 py-1 text-muted hover:text-foreground"
+            className="ml-2 cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
           >
             ✕
           </button>
         </div>
 
-        <div className="flex flex-1 flex-col justify-end space-y-2 overflow-y-auto px-5 py-4">
+        {/* Chat Stream */}
+        <div className="flex flex-1 flex-col justify-end space-y-3 overflow-y-auto px-5 py-4">
           {loading && (
             <div className="flex justify-center py-8">
-              <span className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+              <span className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
             </div>
           )}
           {!loading && error && (
@@ -163,10 +211,12 @@ export default function ChatModal({ match, matchId, myId, onClose }) {
             </p>
           )}
           {!loading && !error && messages.length === 0 && (
-            <p className="py-6 text-center text-sm text-muted">
-              Say hi to {match.name?.split(" ")[0] || "your teammate"} - this is the start of your
-              conversation.
-            </p>
+            <div className="py-8 text-center text-xs text-slate-400 space-y-1">
+              <p className="font-semibold text-cyan-300">⚡ Match Connection Established</p>
+              <p>
+                Say hi to {match.name?.split(" ")[0] || "your teammate"} to coordinate your hackathon project!
+              </p>
+            </div>
           )}
           {messages.map((m) => {
             const mine = m.sender_id === myId;
@@ -174,8 +224,10 @@ export default function ChatModal({ match, matchId, myId, onClose }) {
               <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
                 <div
                   className={cn(
-                    "max-w-[75%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-sm",
-                    mine ? "bg-gradient-to-r from-accent to-accent-2 text-white" : "border border-hairline bg-surface-2"
+                    "max-w-[78%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm shadow-sm",
+                    mine
+                      ? "bg-gradient-to-r from-cyan-500 via-indigo-600 to-pink-500 text-white font-medium"
+                      : "border border-cyan-500/20 bg-surface-2/90 text-slate-200"
                   )}
                 >
                   {m.body}
@@ -186,18 +238,25 @@ export default function ChatModal({ match, matchId, myId, onClose }) {
           <div ref={bottomRef} />
         </div>
 
-        <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-hairline px-4 py-3">
+        {/* Chat Input */}
+        <form onSubmit={handleSend} className="flex items-center gap-2 border-t border-cyan-500/20 bg-surface-2/50 px-4 py-3">
           <input
             type="text"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder={`Message ${match.name || "your teammate"}`}
+            placeholder={`Message ${match.name || "teammate"}...`}
             maxLength={MAX_LEN}
             disabled={loading || Boolean(error)}
-            className="flex-1 rounded-xl border border-hairline bg-surface-2 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none disabled:opacity-50"
+            className="flex-1 rounded-xl border border-hairline bg-surface-2 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none disabled:opacity-50"
           />
-          <Button type="submit" variant="primary" loading={sending} disabled={!draft.trim()}>
-            Send
+          <Button
+            type="submit"
+            variant="primary"
+            loading={sending}
+            disabled={!draft.trim()}
+            className="px-5 py-2.5 bg-gradient-to-r from-cyan-500 to-violet-600 font-bold"
+          >
+            Send ⚡
           </Button>
         </form>
       </div>

@@ -49,24 +49,32 @@ export default function LoginPage() {
 
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-12">
-      <div className="animate-fade-up w-full max-w-sm">
-        <Link href="/" className="mb-8 flex items-center justify-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent-2 text-sm font-black text-white">
-            H
+      <div className="animate-fade-up w-full max-w-md">
+        <Link href="/" className="mb-8 flex items-center justify-center gap-2.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 via-violet-500 to-pink-500 p-0.5 shadow-lg shadow-cyan-500/20">
+            <span className="flex h-full w-full items-center justify-center rounded-[10px] bg-background font-mono text-xs font-black text-cyan-300">
+              SST
+            </span>
+          </div>
+          <span className="text-2xl font-black tracking-tight text-white">
+            HackMates
           </span>
-          <span className="text-xl font-extrabold tracking-tight">HackMate</span>
         </Link>
 
-        <div className="rounded-3xl border border-hairline bg-surface p-7">
-          <h1 className="text-2xl font-extrabold">Welcome back</h1>
-          <p className="mt-1 text-sm text-muted">
-            Log in to keep discovering teammates.
+        <div className="relative overflow-hidden rounded-3xl border border-cyan-500/30 bg-surface/90 p-8 shadow-2xl shadow-cyan-950/40 backdrop-blur-xl">
+          {/* Mecha Corner Ticks */}
+          <div className="pointer-events-none absolute top-0 left-0 h-3.5 w-3.5 border-t-2 border-l-2 border-cyan-400" />
+          <div className="pointer-events-none absolute top-0 right-0 h-3.5 w-3.5 border-t-2 border-r-2 border-violet-400" />
+
+          <h1 className="text-2xl font-black text-white">SST Builder Login</h1>
+          <p className="mt-1 text-xs text-slate-400">
+            Access your hackathon squad deck and live matches.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
-              <label htmlFor="email" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted">
-                Email
+              <label htmlFor="email" className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Email Address
               </label>
               <input
                 id="email"
@@ -74,12 +82,12 @@ export default function LoginPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full rounded-xl border border-hairline bg-surface-2 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none"
+                placeholder="student@scaler.com"
+                className="w-full rounded-xl border border-hairline bg-surface-2 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
               />
             </div>
             <div>
-              <label htmlFor="password" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted">
+              <label htmlFor="password" className="mb-1.5 block font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Password
               </label>
               <input
@@ -89,7 +97,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-hairline bg-surface-2 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none"
+                className="w-full rounded-xl border border-hairline bg-surface-2 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
               />
             </div>
 
@@ -99,15 +107,19 @@ export default function LoginPage() {
               </p>
             )}
 
-            <Button type="submit" loading={loading} className="w-full py-3">
-              Log in
+            <Button
+              type="submit"
+              loading={loading}
+              className="w-full py-3.5 bg-gradient-to-r from-cyan-500 via-indigo-500 to-pink-500 text-white font-bold shadow-lg shadow-cyan-500/25"
+            >
+              Sign In ⚡
             </Button>
           </form>
         </div>
 
-        <p className="mt-5 text-center text-sm text-muted">
-          New to HackMate?{" "}
-          <Link href="/signup" className="font-semibold text-violet-300 hover:text-violet-200">
+        <p className="mt-6 text-center text-xs text-slate-400">
+          New SST builder?{" "}
+          <Link href="/signup" className="font-semibold text-cyan-300 hover:text-cyan-200">
             Create an account
           </Link>
         </p>

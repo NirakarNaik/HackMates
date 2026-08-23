@@ -211,13 +211,37 @@ export default function DiscoverPage() {
       );
     }
     if (current) {
+      const totalCandidates = candidates.length;
+      const currentIndexNum = index + 1;
       return (
         <>
-          <div className="mb-6 text-center">
-            <h1 className="text-2xl font-extrabold tracking-tight">Discover</h1>
-            <p className="mt-1 text-sm text-muted">
-              Swipe through builders ranked by how well you complement each other.
+          <div className="mb-6 text-center max-w-md">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>SST Hackathon Squad Deck</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+              Discover Teammates
+            </h1>
+            <p className="mt-1 text-xs text-slate-400">
+              Ranked dynamically by complementary skills, tracks, and hackathon availability.
             </p>
+
+            {/* Deck HUD Counter */}
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-hairline bg-surface-2/60 px-4 py-2 text-xs">
+              <span className="font-mono text-[11px] text-cyan-300 font-semibold">
+                Builder {currentIndexNum} of {totalCandidates}
+              </span>
+              <div className="h-1.5 flex-1 max-w-[140px] rounded-full bg-surface-3 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-400 to-violet-500 transition-all duration-300"
+                  style={{ width: `${(currentIndexNum / totalCandidates) * 100}%` }}
+                />
+              </div>
+              <span className="font-mono text-[10px] text-slate-400">
+                {remaining} left
+              </span>
+            </div>
           </div>
           <ProfileCard
             key={current.user_id}
@@ -227,20 +251,21 @@ export default function DiscoverPage() {
             onPass={handlePass}
             disabled={swiping}
           />
-          <p className="mt-5 text-center text-xs text-muted">
-            {remaining} builder{remaining === 1 ? "" : "s"} remaining
-          </p>
         </>
       );
     }
     return (
       <EmptyState
         icon="🎉"
-        title="No more teammates"
-        description="You've seen everyone nearby. Check back later for new builders."
+        title="Squad Deck Fully Explored"
+        description="You've swiped through all available SST builders in this cycle! Check back soon or review your matched squads."
       >
-        <Button variant="secondary" onClick={() => router.push("/matches")}>
-          View your matches
+        <Button
+          variant="primary"
+          className="bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-bold"
+          onClick={() => router.push("/matches")}
+        >
+          View Matched Squads ⚡
         </Button>
       </EmptyState>
     );

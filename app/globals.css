@@ -1,25 +1,33 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a10;
-  --surface: #12121a;
-  --surface-2: #1a1a26;
+  --background: #08090f;
+  --surface: #0f121d;
+  --surface-2: #171b2b;
+  --surface-3: #1f2438;
   --border: rgba(255, 255, 255, 0.08);
-  --foreground: #f4f4f8;
-  --muted: #9b9bab;
-  --accent: #8b5cf6;
-  --accent-2: #ec4899;
+  --border-cyan: rgba(6, 182, 212, 0.25);
+  --foreground: #f8fafc;
+  --muted: #94a3b8;
+  --accent: #06b6d4;
+  --accent-2: #8b5cf6;
+  --accent-3: #ec4899;
+  --accent-scaler: #0ea5e9;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-hairline: var(--border);
+  --color-border-cyan: var(--border-cyan);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-2: var(--accent-2);
+  --color-accent-3: var(--accent-3);
+  --color-scaler: var(--accent-scaler);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -28,18 +36,80 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  background-image: 
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6, 182, 212, 0.15), transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139, 92, 246, 0.1), transparent 60%);
+  background-attachment: fixed;
 }
 
 ::selection {
-  background: rgba(139, 92, 246, 0.4);
+  background: rgba(6, 182, 212, 0.4);
+  color: #ffffff;
 }
 
-/* Thin dark scrollbars */
+/* Custom cyber scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2a2a38 transparent;
+  scrollbar-color: #1e293b transparent;
 }
 
+/* Sci-Fi Mecha Circuit Background */
+.mecha-bg-decor {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.25;
+}
+
+.mecha-bg-tl {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 280px;
+  color: #06b6d4;
+}
+
+.mecha-bg-tr {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 280px;
+  color: #8b5cf6;
+}
+
+.mecha-bg-bl {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 280px;
+  height: 280px;
+  color: #0ea5e9;
+}
+
+.mecha-bg-br {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 280px;
+  height: 280px;
+  color: #ec4899;
+}
+
+.mecha-bg-tl path, .mecha-bg-tr path, .mecha-bg-bl path, .mecha-bg-br path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+.mecha-bg-tl line, .mecha-bg-tr line, .mecha-bg-bl line, .mecha-bg-br line {
+  stroke: currentColor;
+}
+
+/* Animations */
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -58,10 +128,10 @@ body {
 @keyframes pop-in {
   0% {
     opacity: 0;
-    transform: scale(0.85);
+    transform: scale(0.88);
   }
   60% {
-    transform: scale(1.03);
+    transform: scale(1.02);
   }
   100% {
     opacity: 1;
@@ -70,5 +140,6 @@ body {
 }
 
 .animate-pop-in {
-  animation: pop-in 0.3s ease-out both;
+  animation: pop-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+

@@ -122,6 +122,23 @@ export default function OnboardingForm({ user, existingProfile }) {
         ({ error: dbError } = await supabase.from("profiles").insert(payload));
       }
 
+      if (
+        dbError &&
+        (dbError.message?.includes("github_skills") ||
+          dbError.code === "PGRST204" ||
+          dbError.code === "42703")
+      ) {
+        const { github_skills, github_topics, github_synced_at, ...safePayload } = payload;
+        if (p) {
+          ({ error: dbError } = await supabase
+            .from("profiles")
+            .update(safePayload)
+            .eq("user_id", user.id));
+        } else {
+          ({ error: dbError } = await supabase.from("profiles").insert(safePayload));
+        }
+      }
+
       if (dbError) {
         console.error("Profile save failed:", dbError.message);
         setSaveError("Could not save your profile. Please try again.");
@@ -138,17 +155,21 @@ export default function OnboardingForm({ user, existingProfile }) {
   }
 
   return (
-    <div className="rounded-3xl border border-hairline bg-surface p-6 sm:p-8">
+    <div className="relative overflow-hidden rounded-3xl border border-cyan-500/30 bg-surface/90 p-6 sm:p-8 shadow-2xl shadow-cyan-950/40 backdrop-blur-xl">
+      {/* Mecha Corner Ticks */}
+      <div className="pointer-events-none absolute top-0 left-0 h-3.5 w-3.5 border-t-2 border-l-2 border-cyan-400" />
+      <div className="pointer-events-none absolute top-0 right-0 h-3.5 w-3.5 border-t-2 border-r-2 border-violet-400" />
+
       {/* Progress */}
-      <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted">
-        <span>
-          Step {step} of {TOTAL_STEPS}
+      <div className="mb-2 flex items-center justify-between font-mono text-xs font-semibold text-slate-400">
+        <span className="text-cyan-300">
+          SST SQUAD SETUP • STEP {step} OF {TOTAL_STEPS}
         </span>
-        <span>{Math.round((step / TOTAL_STEPS) * 100)}%</span>
+        <span className="text-cyan-400 font-bold">{Math.round((step / TOTAL_STEPS) * 100)}%</span>
       </div>
-      <div className="mb-10 h-1.5 w-full overflow-hidden rounded-full bg-white/5">
+      <div className="mb-8 h-2 w-full overflow-hidden rounded-full bg-surface-3">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-accent to-accent-2 transition-all duration-300"
+          className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-violet-500 to-pink-500 transition-all duration-300"
           style={{ width: `${(step / TOTAL_STEPS) * 100}%` }}
         />
       </div>

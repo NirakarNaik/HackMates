@@ -106,11 +106,17 @@ export default function MatchesPage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10 sm:px-6">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">
         <div className="mb-8">
-          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">Your matches</h1>
-          <p className="mt-1 text-sm text-muted">
-            Sorted by compatibility — reach out and start building.
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+            <span>SST Matched Squads ({matches.length})</span>
+          </div>
+          <h1 className="text-2xl font-black tracking-tight sm:text-3xl text-white">
+            Your Hackathon Squads
+          </h1>
+          <p className="mt-1 text-xs text-slate-400">
+            Sorted by synergy and compatibility score — reach out, chat, and start building together.
           </p>
         </div>
 
@@ -123,13 +129,19 @@ export default function MatchesPage() {
         ) : matches.length === 0 ? (
           <EmptyState
             icon="💫"
-            title="No matches yet"
-            description="Keep discovering — your next teammate could be one swipe away."
+            title="No squads matched yet"
+            description="Swipe through potential SST teammates in the Squad Deck to trigger instant mutual matches."
           >
-            <Button onClick={() => router.push("/discover")}>Go to Discover</Button>
+            <Button
+              variant="primary"
+              className="bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-bold"
+              onClick={() => router.push("/discover")}
+            >
+              Launch Squad Deck ⚡
+            </Button>
           </EmptyState>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
             {matches.map((match) => (
               <MatchCard
                 key={`${match.user_id}-${match.matchedAt}`}

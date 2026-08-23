@@ -93,15 +93,13 @@ function bioBlock(bio) {
   );
 }
 
-function listBlock(title, items, Badge) {
+function listBlock(title, items, renderItem) {
   if (!items || items.length === 0) return null;
   return (
     <div className="mt-5">
       <h3 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">{title}</h3>
       <div className="flex flex-wrap gap-1.5">
-        {items.map((item) => (
-          <Badge key={item}>{item}</Badge>
-        ))}
+        {items.map((item) => renderItem(item))}
       </div>
     </div>
   );

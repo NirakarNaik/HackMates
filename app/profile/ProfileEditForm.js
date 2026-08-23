@@ -52,26 +52,41 @@ export default function ProfileEditForm({ user, initial, onCancel }) {
     try {
       const { getSupabase } = await import("@/lib/supabase");
       const supabase = getSupabase();
-      const { error } = await supabase
+      const updatePayload = {
+        name: name.trim(),
+        avatar_url: avatarUrl.trim() || null,
+        bio: bio.trim(),
+        role,
+        skills,
+        interests,
+        looking_for: lookingFor,
+        experience_level: experienceLevel,
+        availability,
+        github_url: githubUrl.trim() || null,
+        github_skills: githubSkills,
+        github_topics: githubTopics,
+        github_synced_at: githubSyncedAt,
+        discord_username: discordUsername.trim() || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      let { error } = await supabase
         .from("profiles")
-        .update({
-          name: name.trim(),
-          avatar_url: avatarUrl.trim() || null,
-          bio: bio.trim(),
-          role,
-          skills,
-          interests,
-          looking_for: lookingFor,
-          experience_level: experienceLevel,
-          availability,
-          github_url: githubUrl.trim() || null,
-          github_skills: githubSkills,
-          github_topics: githubTopics,
-          github_synced_at: githubSyncedAt,
-          discord_username: discordUsername.trim() || null,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq("user_id", user.id);
+
+      if (
+        error &&
+        (error.message?.includes("github_skills") ||
+          error.code === "PGRST204" ||
+          error.code === "42703")
+      ) {
+        const { github_skills, github_topics, github_synced_at, ...safePayload } = updatePayload;
+        ({ error } = await supabase
+          .from("profiles")
+          .update(safePayload)
+          .eq("user_id", user.id));
+      }
 
       if (error) {
         console.error("Profile update failed:", error.message);
