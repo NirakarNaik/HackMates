@@ -41,8 +41,8 @@ export default function SignupPage() {
           authError.message.includes("already registered")
             ? "An account with this email already exists. Try logging in."
             : authError.message.includes("rate limit")
-              ? "Too many attempts. Please wait a moment and try again."
-              : "Could not create your account. Please try again."
+              ? "Too many signup attempts. Please wait a moment and try again."
+              : authError.message || "Could not create your account. Please try again."
         );
         return;
       }
@@ -55,8 +55,9 @@ export default function SignupPage() {
 
       // Email confirmation enabled -> user must verify first.
       setInfo("Account created! Check your email to confirm your address, then log in.");
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      console.error("Signup exception:", err);
+      setError(err.message || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
