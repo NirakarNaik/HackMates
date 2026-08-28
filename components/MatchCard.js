@@ -6,8 +6,15 @@ import { ScorePill } from "./CompatibilityScore";
 import Button from "./Button";
 import { hasGithubSkill } from "@/lib/utils";
 
-// Match list card (README section 30).
-export default function MatchCard({ match, onViewProfile, onConnect, onChat, connecting }) {
+// Match list card with Chat, Profile, and Post-Project Rating (README section 30 + NewFeatures Feature 2).
+export default function MatchCard({
+  match,
+  onViewProfile,
+  onConnect,
+  onChat,
+  onRate,
+  connecting,
+}) {
   return (
     <article className="animate-fade-up relative flex flex-col rounded-2xl border border-cyan-500/25 bg-surface/90 p-5 backdrop-blur-md transition-all hover:border-cyan-400/50 hover:bg-surface-2 group">
       {/* Corner Ticks */}
@@ -61,25 +68,32 @@ export default function MatchCard({ match, onViewProfile, onConnect, onChat, con
         </ul>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 grid grid-cols-2 gap-2">
         <Button
           variant="secondary"
-          className="flex-1 text-xs py-2 border-hairline hover:border-cyan-500/40"
+          className="text-xs py-2 border-hairline hover:border-cyan-500/40"
           onClick={() => onViewProfile(match)}
         >
           View Profile
         </Button>
         <Button
           variant="primary"
-          className="flex-1 text-xs py-2 bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-bold shadow-md shadow-cyan-500/20"
+          className="text-xs py-2 bg-gradient-to-r from-cyan-500 to-violet-600 text-white font-bold shadow-md shadow-cyan-500/20"
           onClick={() => onChat(match)}
         >
           Chat 💬
         </Button>
+        <Button
+          variant="secondary"
+          className="text-xs py-2 border-amber-500/30 text-amber-300 hover:bg-amber-500/10"
+          onClick={() => onRate && onRate(match)}
+        >
+          Rate Teammate ⭐
+        </Button>
         {(match.github_url || match.discord_username) && (
           <Button
             variant="secondary"
-            className="flex-1 text-xs py-2 border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
+            className="text-xs py-2 border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
             onClick={() => onConnect(match)}
             loading={connecting}
           >

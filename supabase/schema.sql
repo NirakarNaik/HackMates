@@ -212,3 +212,83 @@ end $$;
 alter table public.profiles add column if not exists github_skills text[] not null default '{}';
 alter table public.profiles add column if not exists github_topics text[] not null default '{}';
 alter table public.profiles add column if not exists github_synced_at timestamptz;
+
+-- -------------------------------------------------------------
+-- PROJECTS
+-- Collaborations between matched teammates (for post-project reviews)
+-- -------------------------------------------------------------
+create table if not exists public.projects (
+  id           uuid primary key default gen_random_uuid(),
+  title        text not null check (char_length(title) between 1 and 200),
+  description  text default '',
+  creator_id   uuid not null,
+  partner_id   uuid not null,
+  match_id     uuid,
+  status       text not null default 'completed' check (status in ('in_progress', 'completed')),
+  created_at   timestamptz not null default now(),
+  completed_at timestamptz not null default now(),
+  check (creator_id <> partner_id)
+);
+
+create index if not exists idx_projects_creator on public.projects (creator_id);
+create index if not exists idx_projects_partner on public.projects (partner_id);
+
+alter table public.projects enable row level security;
+
+create policy "projects_select_participant"
+  on public.projects for select
+  to authenticated
+  using (creator_id = auth.uid() or partner_id = auth.uid());
+
+create policy "projects_insert_participant"
+  on public.projects for insert
+  to authenticated
+  with check (creator_id = auth.uid() or partner_id = auth.uid());
+
+-- -------------------------------------------------------------
+-- REVIEWS & RATINGS
+-- Post-project feedback across 4 categories (1-5 stars).
+-- -------------------------------------------------------------
+create table if not exists public.reviews (
+  id                     uuid primary key default gen_random_uuid(),
+  project_id             uuid not null references public.projects (id) on delete cascade,
+  reviewer_id            uuid not null,
+  reviewee_id            uuid not null,
+  communication          integer not null check (communication between 1 and 5),
+  reliability            integer not null check (reliability between 1 and 5),
+  technical_contribution integer not null check (technical_contribution between 1 and 5),
+  teamwork               integer not null check (teamwork between 1 and 5),
+  rating                 numeric(3,2) not null check (rating between 1.0 and 5.0),
+  comment                text default '',
+  created_at             timestamptz not null default now(),
+  unique (project_id, reviewer_id, reviewee_id),
+  check (reviewer_id <> reviewee_id)
+);
+
+create index if not exists idx_reviews_reviewee on public.reviews (reviewee_id);
+create index if not exists idx_reviews_reviewer on public.reviews (reviewer_id);
+create index if not exists idx_reviews_project on public.reviews (project_id);
+
+alter table public.reviews enable row level security;
+
+create policy "reviews_select_authenticated"
+  on public.reviews for select
+  to authenticated
+  using (true);
+
+create policy "reviews_insert_authenticated"
+  on public.reviews for insert
+  to authenticated
+  with check (
+    reviewer_id = auth.uid()
+    and reviewer_id <> reviewee_id
+    and exists (
+      select 1 from public.projects p
+      where p.id = reviews.project_id
+        and (
+          (p.creator_id = reviewer_id and p.partner_id = reviewee_id)
+          or (p.creator_id = reviewee_id and p.partner_id = reviewer_id)
+        )
+    )
+  );
+

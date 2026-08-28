@@ -5,9 +5,22 @@ import { SkillBadge, InterestBadge } from "./SkillBadge";
 import Button from "./Button";
 import { hasGithubSkill } from "@/lib/utils";
 
-// Discovery card (README section 17).
-export default function ProfileCard({ profile, compatibility, onLike, onPass, disabled }) {
-  const { reasons } = compatibility;
+// Discovery card with AI Recommendation & "Why this match?" section (NewFeatures Feature 1)
+export default function ProfileCard({
+  profile,
+  compatibility,
+  aiRecommendation,
+  onLike,
+  onPass,
+  disabled,
+}) {
+  const reasons = compatibility?.reasons || [];
+  const score = aiRecommendation?.compatibilityScore ?? compatibility?.score ?? 88;
+  const whyText =
+    aiRecommendation?.why ||
+    (reasons.length > 0 ? reasons[0] : "Strong complementary skill synergy detected.");
+  const complementaryPairs = aiRecommendation?.complementarySkills || [];
+  const suggestedTeam = aiRecommendation?.suggestedTeam;
 
   return (
     <article className="animate-fade-up relative w-full max-w-md overflow-hidden rounded-3xl border border-cyan-500/30 bg-surface/90 p-6 shadow-2xl shadow-cyan-950/40 backdrop-blur-xl group">
@@ -39,6 +52,17 @@ export default function ProfileCard({ profile, compatibility, onLike, onPass, di
             </p>
           </div>
         </div>
+
+        {/* AI Match Score Badge */}
+        <div className="flex flex-col items-end">
+          <div className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-950/40 px-2.5 py-1 text-xs font-black text-emerald-300 shadow-sm shadow-emerald-500/20">
+            <span>✨</span>
+            <span>{score}% Match</span>
+          </div>
+          <span className="mt-1 font-mono text-[9px] uppercase tracking-wider text-slate-400">
+            AI Scored
+          </span>
+        </div>
       </div>
 
       {profile.bio && (
@@ -47,10 +71,51 @@ export default function ProfileCard({ profile, compatibility, onLike, onPass, di
         </p>
       )}
 
+      {/* FEATURE 1: "Why this match?" AI Recommendation Section */}
+      <section className="mt-4 rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-950/40 via-surface-2/70 to-violet-950/30 p-4 shadow-inner">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-cyan-400 text-sm">✦</span>
+            <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-cyan-300">
+              Why this match?
+            </h3>
+          </div>
+          {suggestedTeam && (
+            <span className="rounded-md border border-violet-500/30 bg-violet-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-violet-300">
+              {suggestedTeam}
+            </span>
+          )}
+        </div>
+
+        <p className="text-xs leading-relaxed text-slate-200">{whyText}</p>
+
+        {/* Complementary Skills Pairs */}
+        {complementaryPairs.length > 0 && (
+          <div className="mt-3 border-t border-hairline/60 pt-2.5">
+            <span className="mb-1.5 block font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400">
+              Complementary Skills
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {complementaryPairs.map((pair, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center gap-1 rounded-lg border border-cyan-500/20 bg-cyan-950/30 px-2 py-1 font-mono text-[10px] font-medium text-cyan-200"
+                >
+                  <span className="text-white font-semibold">{pair.mySkill}</span>
+                  <span className="text-cyan-400 text-[9px]">↔</span>
+                  <span className="text-slate-300">{pair.theirSkill}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Skills & Tech Stack */}
       <div className="mt-4 space-y-3">
         <div>
           <h3 className="mb-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Skills & Abilities
+            Skills & Tech Stack
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {profile.skills.map((skill) => (
@@ -74,33 +139,13 @@ export default function ProfileCard({ profile, compatibility, onLike, onPass, di
 
         <div>
           <h3 className="mb-1 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Squad Need (Looking For)
+            Squad Looking For
           </h3>
           <p className="text-xs font-medium text-cyan-200">
             {profile.looking_for.join(" • ")}
           </p>
         </div>
       </div>
-
-      {/* Compatibility Synergies */}
-      {reasons && reasons.length > 0 && (
-        <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-950/20 p-3">
-          <div className="mb-1.5 flex items-center justify-between">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-cyan-400">
-              Squad Synergies
-            </span>
-            <span className="text-[10px] text-cyan-300/80 font-mono">Matched</span>
-          </div>
-          <ul className="space-y-1">
-            {reasons.slice(0, 3).map((reason) => (
-              <li key={reason} className="flex items-start gap-1.5 text-xs text-emerald-300">
-                <span className="text-cyan-400" aria-hidden>✦</span>
-                <span>{reason}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {/* Pass / Like Controls */}
       <div className="mt-5 flex gap-3">

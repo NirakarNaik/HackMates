@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Avatar from "@/components/Avatar";
@@ -13,6 +13,28 @@ export default function ProfilePage() {
   const router = useRouter();
   const { loading, user, profile, error: authError } = useProtectedUser();
   const [editing, setEditing] = useState(false);
+  const [reviewsData, setReviewsData] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    if (!profile?.user_id) return;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/reviews?userId=${profile.user_id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (active) setReviewsData(data);
+        }
+      } catch (err) {
+        console.error("Failed to load profile reviews:", err);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [profile?.user_id]);
 
   if (loading) {
     return (
@@ -107,6 +129,101 @@ export default function ProfilePage() {
                 <p className="text-sm leading-relaxed text-slate-300">{profile.bio}</p>
               </section>
             )}
+
+            {/* FEATURE 2: Builder Reputation & Post-Project Reviews */}
+            <section className="rounded-2xl border border-amber-500/30 bg-amber-950/20 p-5">
+              <div className="flex items-center justify-between mb-4 border-b border-hairline/60 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-amber-400 text-2xl">⭐</span>
+                  <div>
+                    <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-amber-300">
+                      Builder Reputation & Reviews
+                    </h3>
+                    <p className="font-mono text-[11px] text-slate-400">
+                      Verified post-project feedback from hackathon teammates
+                    </p>
+                  </div>
+                </div>
+                {reviewsData && (
+                  <div className="text-right">
+                    <span className="font-mono text-base font-black text-amber-300">
+                      ⭐ {reviewsData.averageRating} / 5.0
+                    </span>
+                    <span className="block font-mono text-[10px] text-slate-400">
+                      {reviewsData.totalReviews} project reviews
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Category Averages */}
+              {reviewsData?.categoryAverages && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+                  <div className="rounded-xl bg-surface-2/70 p-2.5 border border-white/5 text-center">
+                    <span className="block text-[11px] text-slate-400 mb-0.5">Communication</span>
+                    <span className="font-mono text-xs font-bold text-amber-300">
+                      ⭐ {reviewsData.categoryAverages.communication}
+                    </span>
+                  </div>
+                  <div className="rounded-xl bg-surface-2/70 p-2.5 border border-white/5 text-center">
+                    <span className="block text-[11px] text-slate-400 mb-0.5">Reliability</span>
+                    <span className="font-mono text-xs font-bold text-amber-300">
+                      ⭐ {reviewsData.categoryAverages.reliability}
+                    </span>
+                  </div>
+                  <div className="rounded-xl bg-surface-2/70 p-2.5 border border-white/5 text-center">
+                    <span className="block text-[11px] text-slate-400 mb-0.5">Technical</span>
+                    <span className="font-mono text-xs font-bold text-amber-300">
+                      ⭐ {reviewsData.categoryAverages.technicalContribution}
+                    </span>
+                  </div>
+                  <div className="rounded-xl bg-surface-2/70 p-2.5 border border-white/5 text-center">
+                    <span className="block text-[11px] text-slate-400 mb-0.5">Teamwork</span>
+                    <span className="font-mono text-xs font-bold text-amber-300">
+                      ⭐ {reviewsData.categoryAverages.teamwork}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Recent Teammate Reviews */}
+              {reviewsData?.reviews && reviewsData.reviews.length > 0 && (
+                <div className="space-y-2.5 border-t border-hairline/60 pt-3">
+                  <span className="block font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+                    Recent Reviews
+                  </span>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {reviewsData.reviews.slice(0, 4).map((r) => (
+                      <div
+                        key={r.id}
+                        className="rounded-xl border border-white/5 bg-surface-2/60 p-3 text-xs"
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <Avatar src={r.reviewer_avatar} name={r.reviewer_name} size={22} />
+                            <span className="font-bold text-white">{r.reviewer_name}</span>
+                            <span className="text-[11px] text-cyan-300/80 font-mono">
+                              ({r.reviewer_role || "Builder"})
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-mono">
+                              • {r.project_title || "Hackathon"}
+                            </span>
+                          </div>
+                          <span className="font-mono text-[11px] font-bold text-amber-300">
+                            ⭐ {r.rating}
+                          </span>
+                        </div>
+                        {r.comment && (
+                          <p className="text-xs text-slate-300 italic pl-7">
+                            &quot;{r.comment}&quot;
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
 
             <section>
               <h3 className="mb-2 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-400">

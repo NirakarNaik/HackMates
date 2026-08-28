@@ -10,6 +10,7 @@ import Button from "@/components/Button";
 import { useProtectedUser } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
 import { calculateCompatibility } from "@/lib/matching";
+import { generateHeuristicRecommendation } from "@/lib/aiRecommendation";
 import { ensureDemoProfiles } from "@/lib/demoData";
 
 // Demo profiles always like back, so every Like in a single-account demo
@@ -67,11 +68,16 @@ export default function DiscoverPage() {
 
         const pool = (profilesData || [])
           .filter((p) => !excluded.has(p.user_id))
-          .map((p) => ({
-            ...p,
-            compat: calculateCompatibility(profile, p),
-          }))
-          .sort((a, b) => b.compat.score - a.compat.score);
+          .map((p) => {
+            const compat = calculateCompatibility(profile, p);
+            const aiRec = generateHeuristicRecommendation(profile, p);
+            return {
+              ...p,
+              compat,
+              aiRec,
+            };
+          })
+          .sort((a, b) => b.aiRec.compatibilityScore - a.aiRec.compatibilityScore);
 
         if (!active) return;
         setCandidates(pool);
@@ -247,6 +253,7 @@ export default function DiscoverPage() {
             key={current.user_id}
             profile={current}
             compatibility={current.compat}
+            aiRecommendation={current.aiRec}
             onLike={handleLike}
             onPass={handlePass}
             disabled={swiping}
